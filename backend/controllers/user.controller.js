@@ -3,6 +3,8 @@ import redisClient from "../services/redis.service.js";
 import * as userService from "../services/user.service.js";
 import { validationResult } from "express-validator";
 
+
+//register user
 export const createUserController = async (req, res) => {
   const errors = validationResult(req);
 
@@ -13,13 +15,15 @@ export const createUserController = async (req, res) => {
     const user = await userService.createUser(req.body);
 
     const token = user.generateJWT();
-
+    delete user._doc.password; 
     res.status(201).json({ user, token });
   } catch (error) {
     return res.status(500).send({ error: error.message });
   }
 };
 
+
+//login user
 export const loginUserController = async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -45,6 +49,7 @@ export const loginUserController = async (req, res) => {
 
     const token = await user.generateJWT();
 
+    delete user._doc.password; // Remove password from user object before sending response
     res.status(200).json({ user, token });
   } catch (err) {
     return res.status(500).send({ error: err.message });
@@ -66,7 +71,8 @@ export const logoutController = async (req, res) => {
     // Invalidate the token in Redis
     await redisClient.set(token, "logout", "EX", 3600 * 24); // Set token as invalid for 1 hour
     // await redisClient.set(token, "Invalid", "EX", 3600 * 24); // Set token as invalid for 1 hour
-
+     
+    delete user.__doc.password; // Remove password from user object before sending response
     res.status(200).send({ message: "Logged out successfully" });
   } catch (error) {
     return res.status(400).send({ error: error.message });

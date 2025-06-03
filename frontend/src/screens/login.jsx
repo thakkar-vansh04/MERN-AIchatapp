@@ -1,62 +1,32 @@
-import React, { useState } from 'react'
+import React, { useState, useContext } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from '../config/axios'
+import { UserContext } from '../context/user.context'
 
 const Login = () => {
 
-    // const [email, setEmail] = useState('')
-    // const [password, setPassword] = useState('')
-    //below formData state is used to manage both email and password in a single state object
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
+    const {setUser} = useContext(UserContext)
+    
   const [error, setError] = useState('')
   const navigate = useNavigate()
-
-  const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    })
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
-    axios.post('/login', formData)
+    axios.post('/users/login', {email, password})
     .then((res) => {
         console.log(res.data)
-        navigate('/') // Redirect to home page
+        localStorage.setItem('token', res.data.token);
+        setUser(res.data.user);
+        navigate('/') 
     })
     .catch((err) => {
         console.log(err.response.data)
     });
         
-    
-    // try {
-    //   const response = await fetch('http://localhost:3000/users/login', {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //     },
-    //     body: JSON.stringify(formData),
-    //     credentials: 'include'
-    //   })
-
-    //   const data = await response.json()
-
-    //   if (!response.ok) {
-    //     throw new Error(data.error || 'Login failed')
-    //   }
-
-    //   // Store token if needed
-    //   localStorage.setItem('token', data.token)
-    //   navigate('/') // Redirect to home page
-    // } catch (err) {
-    //   setError(err.message)
-    // }
   }
 
   return (
@@ -85,8 +55,7 @@ const Login = () => {
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-800 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Email address"
-                value={formData.email}
-                onChange={handleChange}
+                onChange={(e)=> setEmail(e.target.value)}
               />
             </div>
             <div>
@@ -100,8 +69,7 @@ const Login = () => {
                 required
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-700 placeholder-gray-500 text-white bg-gray-800 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                 placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
+                onChange={(e)=> setPassword(e.target.value)}
               />
             </div>
           </div>
@@ -129,7 +97,7 @@ const Login = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
