@@ -11,3 +11,10 @@ export const createUser = async ({ email, password }) => {
     
     return user;
 }
+
+export const getAllUsres= async ({userId}) => {
+    const users = await userModel.find({
+        _id: { $ne: userId } // Exclude the current user
+    }, "-password"); // Exclude password field
+    return users;
+}
