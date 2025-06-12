@@ -21,10 +21,10 @@ router.put('/add-user',
     body('projectId')
         .isString().withMessage('Project ID is required'),
     body('users')
-        .isArray({ min: 1 }).withMessage('Users must be a non-empty array pf string').bail()
+        .isArray({ min: 1 }).withMessage('Users must be a non-empty array of string').bail()
         .custom((arr) => arr.every(user => typeof user === 'string')).withMessage('Each user must be a string'),
     projectController.addUserToProject
-);
+); 
 router.get('/get-project/:projectId',
     authMiddleware.authUser,
     projectController.getProjectById
