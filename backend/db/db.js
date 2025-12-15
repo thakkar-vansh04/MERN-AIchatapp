@@ -1,6 +1,5 @@
 import 'dotenv/config'
 import mongoose from "mongoose";
-console.log("Mongo_uri=",process.env.MONGODB_URI);
 function connect() {
   mongoose
     .connect(process.env.MONGODB_URI)
