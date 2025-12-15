@@ -6,23 +6,28 @@ import { UserContext } from "../context/user.context";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { setUser } = useContext(UserContext);
+  const { login } = useContext(UserContext);
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    axios
-      .post("/users/login", { email, password })
-      .then((res) => {
-        localStorage.setItem("token", res.data.token);
-        setUser(res.data.user);
-        navigate("/");
-      })
-      .catch((err) => {
-        setError(err.response?.data?.message || "Login failed");
-      });
+    setIsLoading(true);
+    
+    try {
+      const res = await axios.post("/users/login", { email, password });
+      
+      // Use the login function from context to set user and token
+      login(res.data.user, res.data.token);
+      
+      navigate("/");
+    } catch (err) {
+      setError(err.response?.data?.error || err.response?.data?.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -51,8 +56,10 @@ const Login = () => {
               name="email"
               type="email"
               required
-              className="w-full px-4 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+              disabled={isLoading}
+              className="w-full px-4 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition disabled:opacity-50"
               placeholder="Enter your email"
+              value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
@@ -66,22 +73,32 @@ const Login = () => {
               name="password"
               type="password"
               required
-              className="w-full px-4 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition"
+              disabled={isLoading}
+              className="w-full px-4 py-2 rounded-md bg-gray-700 text-white border border-gray-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 outline-none transition disabled:opacity-50"
               placeholder="Enter your password"
+              value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
 
           <button
             type="submit"
-            className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-md shadow transition duration-200"
+            disabled={isLoading}
+            className="w-full py-2 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-500 text-white font-medium rounded-md shadow transition duration-200 disabled:cursor-not-allowed"
           >
-            Sign In
+            {isLoading ? (
+              <div className="flex items-center justify-center gap-2">
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Signing In...
+              </div>
+            ) : (
+              'Sign In'
+            )}
           </button>
         </form>
 
         <div className="text-center text-sm text-gray-400">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link
             to="/register"
             className="text-indigo-400 hover:text-indigo-300 transition"

@@ -20,19 +20,18 @@ export const generateResult = async (userPrompt) => {
           {
             role: "system",
             text: `
-            You are an expert in MERN and Development with 10 years of experience.
             Provide codes and function in order as per the prompt without any "\n"s and unnecessary details.
             Provide answers in simple language. 
             Handle edge cases and errors.
             Follow industry best practices.
             If the prompt is about any code generation provide me the tree structure for better understanding.
             
-               If user ask que based on code follow below example:
+            If user ask que based on code follow below example:
               Example:
               user: Create an express application
               response:{
 
-                  "text":"this is your fileTree structure of the expres server"
+                  "text":"This is your fileTree structure of the expres server"
                   "fileTree":{
                   "app.js":{
                   content:"

@@ -22,7 +22,6 @@ export const createUserController = async (req, res) => {
   }
 };
 
-
 //login user
 export const loginUserController = async (req, res) => {
   const errors = validationResult(req);
@@ -63,16 +62,19 @@ export const profileController = async (req, res) => {
 
 export const logoutController = async (req, res) => {
   try {
-    const token = req.cookies.token || req.headers.authorization.split(" ")[1];
+    const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
     if (!token) {
       return res.status(401).send({ error: "Unauthorised User" });
     }
 
-    // Invalidate the token in Redis
-    await redisClient.set(token, "logout", "EX", 3600 * 24); // Set token as invalid for 1 hour
-    // await redisClient.set(token, "Invalid", "EX", 3600 * 24); // Set token as invalid for 1 hour
+    // Invalidate the token in Redis (gracefully handle Redis errors)
+    try {
+      await redisClient.set(token, "logout", "EX", 3600 * 24); // Set token as invalid for 24 hours
+    } catch (redisError) {
+      // If Redis is unavailable, still allow logout but log the error
+      console.warn("Redis unavailable for token blacklist, logout still processed");
+    }
      
-    delete user.__doc.password; // Remove password from user object before sending response
     res.status(200).send({ message: "Logged out successfully" });
   } catch (error) {
     return res.status(400).send({ error: error.message });

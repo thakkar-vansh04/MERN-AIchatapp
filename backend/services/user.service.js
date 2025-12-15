@@ -9,6 +9,8 @@ export const createUser = async ({ email, password }) => {
 
     const user = await userModel.create({ email, password: hashedPassword });
     
+    console.log(user);
+
     return user;
 }
 

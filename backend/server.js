@@ -1,4 +1,4 @@
-import 'dotenv/config.js';// helps to work with .env files
+import 'dotenv/config';// helps to work with .env files
 import http from 'http';
 import app from './app.js';
 import { Server } from 'socket.io';
