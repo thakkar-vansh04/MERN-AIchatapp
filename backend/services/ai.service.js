@@ -11,15 +11,15 @@ export const generateResult = async (userPrompt) => {
 
     const contents = isCasual
       ? [
-          {
-            role: "user",
-            text: userPrompt,
-          },
-        ]
+        {
+          role: "user",
+          text: userPrompt,
+        },
+      ]
       : [
-          {
-            role: "system",
-            text: `
+        {
+          role: "system",
+          text: `
             Provide codes and function in order as per the prompt without any "\n"s and unnecessary details.
             Provide answers in simple language. 
             Handle edge cases and errors.
@@ -82,21 +82,23 @@ export const generateResult = async (userPrompt) => {
           }
 
             `,
-          },
-          {
-            role: "user",
-            text: userPrompt,
-          },
-        ];
+        },
+        {
+          role: "user",
+          text: userPrompt,
+        },
+      ];
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
+      model: "gemini-2.5-flash",
       contents,
     });
 
-    return response.text; // or response.text depending on your SDK version
+    // Handle the response - could be response.text or response.text()
+    const text = typeof response.text === 'function' ? response.text() : response.text;
+    return text || "I couldn't generate a response. Please try again.";
   } catch (error) {
     console.error("Error generating content:", error);
-    return { message: error.message };
+    return `Error: ${error.message || "Failed to generate AI response"}`;
   }
 };

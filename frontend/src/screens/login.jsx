@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "../config/axios";
 import { UserContext } from "../context/user.context";
@@ -6,22 +6,39 @@ import { UserContext } from "../context/user.context";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true); // Default to remember
   const { login } = useContext(UserContext);
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Load saved email if "remember me" was used before
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setIsLoading(true);
-    
+
     try {
       const res = await axios.post("/users/login", { email, password });
-      
+
+      // Save email if remember me is checked
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
       // Use the login function from context to set user and token
-      login(res.data.user, res.data.token);
-      
+      login(res.data.user, res.data.token, rememberMe);
+
       navigate("/");
     } catch (err) {
       setError(err.response?.data?.error || err.response?.data?.message || "Login failed");
@@ -79,6 +96,19 @@ const Login = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+          </div>
+
+          <div className="flex items-center justify-between">
+            <label className="flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                disabled={isLoading}
+                className="w-4 h-4 rounded border-gray-600 bg-gray-700 text-indigo-600 focus:ring-indigo-500 focus:ring-offset-gray-800 cursor-pointer disabled:opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-300">Remember me</span>
+            </label>
           </div>
 
           <button

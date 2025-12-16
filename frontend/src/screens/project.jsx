@@ -36,7 +36,8 @@ const Project = () => {
 
   const [messages, setMessages] = useState([]);
   const [fileTree, setFileTree] = useState({
-    "app.js": { content: `    
+    "app.js": {
+      content: `    
       const express=require('express');
       const app=express();
       const PORT=3000;
@@ -49,7 +50,8 @@ const Project = () => {
         console.log("Server started: https://localhost:3000")
       })
       ` },
-    "package.json": { content: `{
+    "package.json": {
+      content: `{
   "name": "express-server",
   "version": "1.0.0",
   "description": "A basic Express server",
@@ -103,16 +105,26 @@ const Project = () => {
     initializeSocket(project._id);
 
     receiveMessage("project-message", (data) => {
-      if (data.message.fileTree) {
-        setFileTree(data.message.fileTree);
+      try {
+        // Handle fileTree if present
+        if (data.message && typeof data.message === 'object' && data.message.fileTree) {
+          setFileTree(data.message.fileTree);
+        }
+        // Ensure message is stored as a string for safe rendering
+        const messageContent = typeof data.message === 'string'
+          ? data.message
+          : (data.message?.text || JSON.stringify(data.message));
+        setMessages((prev) => [...prev, { sender: data.sender, message: messageContent }]);
+      } catch (error) {
+        console.error('Error processing message:', error);
+        setMessages((prev) => [...prev, { sender: data.sender, message: 'Error processing message' }]);
       }
-      setMessages((prev) => [...prev, { sender: data.sender, message: data.message }]);
     });
 
-    axios.get("/users/all").then((res) => setUsers(res.data.allUsers));
+    axios.get("/users/all").then((res) => setUsers(res.data.allUsers)).catch(console.error);
     axios.get(`/projects/get-project/${location.state.project._id}`).then((res) => {
       setProject(res.data.project);
-    });
+    }).catch(console.error);
   }, []);
 
   return (
@@ -128,7 +140,7 @@ const Project = () => {
             <div className="absolute inset-0 opacity-10">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent transform -skew-y-12"></div>
             </div>
-            
+
             <div className="relative z-10 flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
                 <i className="ri-code-box-fill text-xl"></i>
@@ -138,7 +150,7 @@ const Project = () => {
                 <p className="text-xs text-white/80">Collaborative Workspace</p>
               </div>
             </div>
-            
+
             <div className="relative z-10 flex gap-2">
               <button
                 onClick={() => setIsModalOpen(true)}
@@ -178,45 +190,40 @@ const Project = () => {
               messages.map((msg, index) => (
                 <div
                   key={index}
-                  className={`max-w-[75%] transform transition-all duration-300 hover:scale-[1.02] ${
-                    msg.sender._id === user._id ? "ml-auto" : "mr-auto"
-                  }`}
+                  className={`max-w-[75%] transform transition-all duration-300 hover:scale-[1.02] ${msg.sender._id === user._id ? "ml-auto" : "mr-auto"
+                    }`}
                 >
                   <div
-                    className={`p-2 rounded-2xl shadow-lg backdrop-blur-sm relative ${
-                      msg.sender._id === user._id
+                    className={`p-2 rounded-2xl shadow-lg backdrop-blur-sm relative ${msg.sender._id === user._id
                         ? "bg-gradient-to-br from-emerald-500 to-teal-600 text-white ml-4"
                         : "bg-white/90 text-gray-800 mr-4 border border-gray-100"
-                    }`}
+                      }`}
                   >
                     {/* Message tail */}
                     <div
-                      className={`absolute top-4 w-3 h-3 transform rotate-45 ${
-                        msg.sender._id === user._id
+                      className={`absolute top-4 w-3 h-3 transform rotate-45 ${msg.sender._id === user._id
                           ? "-right-1.5 bg-gradient-to-br from-emerald-500 to-teal-600"
                           : "-left-1.5 bg-white border-r border-b border-gray-100"
-                      }`}
+                        }`}
                     ></div>
-                    
+
                     <div className="flex items-center gap-2 mb-2">
                       <div
-                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                          msg.sender._id === user._id
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${msg.sender._id === user._id
                             ? "bg-white/20 text-white"
                             : "bg-gradient-to-br from-violet-500 to-indigo-500 text-white"
-                        }`}
+                          }`}
                       >
                         {msg.sender.email?.[0]?.toUpperCase() || "?"}
                       </div>
                       <small
-                        className={`text-xs font-medium ${
-                          msg.sender._id === user._id ? "text-white/80" : "text-gray-500"
-                        }`}
+                        className={`text-xs font-medium ${msg.sender._id === user._id ? "text-white/80" : "text-gray-500"
+                          }`}
                       >
                         {msg.sender.email}
                       </small>
                     </div>
-                    
+
                     <div className="leading-relaxed">
                       {msg.sender._id === "ai" ? (
                         <Markdown
@@ -224,10 +231,10 @@ const Project = () => {
                             overrides: { code: { component: SyntaxHighlightedCode } },
                           }}
                         >
-                          {msg.message}
+                          {typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)}
                         </Markdown>
                       ) : (
-                        msg.message
+                        typeof msg.message === 'string' ? msg.message : JSON.stringify(msg.message)
                       )}
                     </div>
                   </div>
@@ -261,9 +268,8 @@ const Project = () => {
 
           {/* Enhanced Side Panel */}
           <div
-            className={`absolute inset-y-0 left-0 w-full bg-white/95 backdrop-blur-md shadow-2xl transform transition-all duration-500 ease-out z-20 ${
-              isSidePanelOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
-            }`}
+            className={`absolute inset-y-0 left-0 w-full bg-white/95 backdrop-blur-md shadow-2xl transform transition-all duration-500 ease-out z-20 ${isSidePanelOpen ? "translate-x-0 opacity-100" : "-translate-x-full opacity-0"
+              }`}
           >
             <header className="flex justify-between items-center p-5 bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 text-white shadow-xl">
               <div className="flex items-center gap-3">
@@ -275,7 +281,7 @@ const Project = () => {
                   <p className="text-xs text-white/80">{project.users?.length || 0} collaborators</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setIsSidePanelOpen(false)}
                 className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 hover:scale-105"
               >
@@ -323,7 +329,7 @@ const Project = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="custom-scrollbar overflow-y-auto max-h-full">
               {Object.keys(fileTree).map((file, i) => (
                 <button
@@ -332,20 +338,17 @@ const Project = () => {
                     setCurrentFile(file);
                     setOpenFiles((prev) => [...new Set([...prev, file])]);
                   }}
-                  className={`w-full text-left px-4 py-3 border-b border-gray-700/30 hover:bg-gray-700/50 transition-all duration-200 flex items-center gap-3 group ${
-                    currentFile === file ? "bg-violet-600/20 border-r-2 border-violet-500" : ""
-                  }`}
+                  className={`w-full text-left px-4 py-3 border-b border-gray-700/30 hover:bg-gray-700/50 transition-all duration-200 flex items-center gap-3 group ${currentFile === file ? "bg-violet-600/20 border-r-2 border-violet-500" : ""
+                    }`}
                 >
-                  <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs ${
-                    file.endsWith('.js') ? 'bg-yellow-500/20 text-yellow-400' :
-                    file.endsWith('.json') ? 'bg-green-500/20 text-green-400' :
-                    'bg-blue-500/20 text-blue-400'
-                  }`}>
-                    <i className={`${
-                      file.endsWith('.js') ? 'ri-javascript-fill' :
-                      file.endsWith('.json') ? 'ri-file-code-fill' :
-                      'ri-file-fill'
-                    }`}></i>
+                  <div className={`w-6 h-6 rounded-md flex items-center justify-center text-xs ${file.endsWith('.js') ? 'bg-yellow-500/20 text-yellow-400' :
+                      file.endsWith('.json') ? 'bg-green-500/20 text-green-400' :
+                        'bg-blue-500/20 text-blue-400'
+                    }`}>
+                    <i className={`${file.endsWith('.js') ? 'ri-javascript-fill' :
+                        file.endsWith('.json') ? 'ri-file-code-fill' :
+                          'ri-file-fill'
+                      }`}></i>
                   </div>
                   <span className="text-gray-300 group-hover:text-white transition-colors font-mono text-sm">
                     {file}
@@ -364,11 +367,10 @@ const Project = () => {
                   <button
                     key={i}
                     onClick={() => setCurrentFile(file)}
-                    className={`px-6 py-3 text-sm font-mono flex items-center gap-2 transition-all duration-200 border-b-2 whitespace-nowrap ${
-                      currentFile === file
+                    className={`px-6 py-3 text-sm font-mono flex items-center gap-2 transition-all duration-200 border-b-2 whitespace-nowrap ${currentFile === file
                         ? "bg-gray-900 text-violet-400 border-violet-500"
                         : "text-gray-400 hover:text-white hover:bg-gray-700/50 border-transparent"
-                    }`}
+                      }`}
                   >
                     <div className={`w-3 h-3 rounded-full bg-white`}></div>
                     {file}
@@ -378,7 +380,7 @@ const Project = () => {
                   </button>
                 ))}
               </div>
-              
+
               {/* Code Editor */}
               <div className="flex-1 relative">
                 <textarea
@@ -393,7 +395,7 @@ const Project = () => {
                   style={{ tabSize: 2 }}
                   placeholder="Start coding..."
                 />
-                
+
                 {/* Line numbers background effect */}
                 {/* <div className="absolute top-0 left-0 w-12 h-full bg-gray-800/50 border-r border-gray-700/50 pointer-events-none"></div> */}
               </div>
@@ -425,25 +427,24 @@ const Project = () => {
                     <p className="text-sm text-white/80">Invite team members to join</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsModalOpen(false)}
                   className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all duration-200 hover:scale-105"
                 >
                   <i className="ri-close-fill text-xl"></i>
                 </button>
               </header>
-              
+
               <div className="p-6">
                 <ul className="space-y-3 max-h-80 overflow-y-auto custom-scrollbar">
                   {users.map((u, index) => (
                     <li
                       key={u._id}
                       onClick={() => handleUserSelect(u._id)}
-                      className={`p-4 rounded-2xl cursor-pointer flex items-center gap-4 transition-all duration-200 hover:scale-[1.02] ${
-                        selectedUserId.includes(u._id)
+                      className={`p-4 rounded-2xl cursor-pointer flex items-center gap-4 transition-all duration-200 hover:scale-[1.02] ${selectedUserId.includes(u._id)
                           ? "bg-gradient-to-r from-violet-100 to-indigo-100 border-2 border-violet-300 shadow-lg"
                           : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
-                      }`}
+                        }`}
                       style={{ animationDelay: `${index * 50}ms` }}
                     >
                       <div className="relative">
@@ -463,7 +464,7 @@ const Project = () => {
                     </li>
                   ))}
                 </ul>
-                
+
                 <div className="mt-6 flex gap-3">
                   <button
                     onClick={() => setIsModalOpen(false)}
@@ -483,7 +484,7 @@ const Project = () => {
             </div>
           </div>
         )}
-        
+
         {/* Custom Styles */}
         <style jsx>{`
           .custom-scrollbar::-webkit-scrollbar {

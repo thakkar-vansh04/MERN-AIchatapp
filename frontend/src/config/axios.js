@@ -6,7 +6,8 @@ const axiosInstance = axios.create({
 
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token");
+    // Check both localStorage (remember me) and sessionStorage
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -14,5 +15,5 @@ axiosInstance.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
- 
+
 export default axiosInstance; 

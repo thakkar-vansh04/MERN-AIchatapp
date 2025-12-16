@@ -1,29 +1,26 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useEffect } from "react";
 import { UserContext } from "../context/user.context";
 import { useNavigate } from "react-router-dom";
 
 const UserAuth = ({ children }) => {
-  const { user } = useContext(UserContext);
-  const [loading, setLoading] = useState(true);
+  const { user, isLoading } = useContext(UserContext);
   const navigate = useNavigate();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    
-    // Check if both user and token exist
-    if (user && token) {
-      setLoading(false);
-    } else if (!token) {
-      // No token, redirect to login
-      navigate("/login");
-    } else if (!user) {
-      // Token exists but no user, redirect to login
+    // Wait until context has finished loading from storage
+    if (isLoading) return;
+
+    // Check for token in both storages
+    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
+    // If no user or no token after loading, redirect to login
+    if (!user || !token) {
       navigate("/login");
     }
-  }, [user, navigate]);
+  }, [user, isLoading, navigate]);
 
-  // Show loading spinner while checking auth
-  if (loading) {
+  // Show loading spinner while context is initializing
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
         <div className="text-center">
@@ -35,13 +32,23 @@ const UserAuth = ({ children }) => {
     );
   }
 
+  // Check for token in both storages
+  const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+
   // If we have both user and token, render the protected content
-  if (user && localStorage.getItem("token")) {
+  if (user && token) {
     return <>{children}</>;
   }
 
-  // Fallback - shouldn't reach here but just in case
-  return null;
+  // Fallback - show loading while redirecting
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black flex items-center justify-center">
+      <div className="text-center">
+        <div className="w-16 h-16 border-4 border-violet-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+        <p className="text-white text-lg font-semibold">Redirecting...</p>
+      </div>
+    </div>
+  );
 };
 
 export default UserAuth;
